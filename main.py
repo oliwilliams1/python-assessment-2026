@@ -1,4 +1,5 @@
 import customtkinter as ctk
+import copy
 
 GST = 1.15
 
@@ -21,7 +22,8 @@ class TrackedMenuItem:
         self.times_ordered = 0
 
 class Order:
-    items: dict[MenuItem, int] = {item: 0 for item in items}
+    def __init__(self):
+        self.items: dict[MenuItem, int] = {item: 0 for item in items}
 
 class Restaurant:
     def __init__(self, name: str):
@@ -32,7 +34,8 @@ class Restaurant:
         self.current_order: Order = Order()
     
     def place_order(self):
-        self.orders.append(self.current_order)
+        self.orders.append(copy.deepcopy(self.current_order))
+
         self.clear_current_order()
         self.update_past_order_summary()
 
@@ -47,6 +50,16 @@ class Restaurant:
             self.current_order.items[item] = 0
         self.update_order_summary()
 
+    def clear_past_orders(self):
+        self.orders.clear()
+        self.update_past_order_summary()
+
+    def is_order_empty(self, order: Order) -> bool:
+        for item in order.items:
+            if order.items[item] > 0:
+                return False
+        return True
+    
     def update_order_summary(self):
         summary = ""
         subtotal = 0.0
@@ -59,14 +72,9 @@ class Restaurant:
                 line_total = item.price * quantity
                 subtotal += line_total
 
-                summary += f"{item.name} x{quantity} - ${line_total:.2f}\n"
+                summary += f"{item.name} x {quantity} - ${line_total:.2f}\n"
 
-        is_order_empty: bool = True
-
-        for item in self.current_order.items:
-            if self.current_order.items[item] > 0:
-                is_order_empty = False
-                break
+        is_order_empty: bool = self.is_order_empty(self.current_order)
 
         gst_amount = subtotal * (GST - 1)
         total = subtotal * GST
@@ -83,6 +91,34 @@ class Restaurant:
 
     def update_past_order_summary(self):
         summary = ""
+
+        is_past_orders_valid: bool = False
+
+        for i, order in enumerate(self.orders):
+            if not self.is_order_empty(order):
+                is_past_orders_valid = True
+
+            if (i > 0):
+                summary += "\n\n"
+
+            summary += f"Order {i + 1}:\n"
+            order_subtotal = 0.0
+
+            for item, quantity in order.items.items():
+                if quantity > 0:
+                    line_total = item.price * quantity
+                    order_subtotal += line_total
+                    summary += f"  {item.name} x {quantity} - ${line_total:.2f}\n"
+
+            gst_amount = order_subtotal * (GST - 1)
+            order_total = order_subtotal * GST
+
+            summary += f"\n  Subtotal: ${order_subtotal:.2f}\n"
+            summary += f"  GST: ${gst_amount:.2f}\n"
+            summary += f"  Total: ${order_total:.2f}"
+
+        if not is_past_orders_valid:
+            summary = "No past orders\n"
 
         if self.past_order_label != None:
             self.past_order_label.configure(text=summary)
@@ -109,19 +145,20 @@ class Restaurant:
 
     def layout_buttons(self, parent: ctk.CTkFrame):
         ctk.CTkButton(parent, text="Place Order", command=self.place_order).grid(row=0, column=0, padx=5, pady=5)
-        ctk.CTkButton(parent, text="Clear", command=self.clear_current_order).grid(row=1, column=0, padx=5, pady=5)
-        ctk.CTkButton(parent, text="Exit", command=app.destroy).grid(row=2, column=0, padx=5, pady=5)
+        ctk.CTkButton(parent, text="Clear Current Order", command=self.clear_current_order).grid(row=1, column=0, padx=5, pady=5)
+        ctk.CTkButton(parent, text="Clear Past Orders", command=self.clear_past_orders).grid(row=2, column=0, padx=5, pady=5)
+        ctk.CTkButton(parent, text="Exit", command=app.destroy).grid(row=3, column=0, padx=5, pady=5)
 
     def layout_order_summary(self, parent: ctk.CTkScrollableFrame):
         ctk.CTkLabel(parent, text="Current Order", font=ctk.CTkFont(size=18, weight="bold")).pack(pady=10)
 
-        self.summary_label = ctk.CTkLabel(parent, text="No items selected", justify="left", anchor="w", font=ctk.CTkFont(size=16))
+        self.summary_label = ctk.CTkLabel(parent, text="No items selected\n", justify="left", anchor="w", font=ctk.CTkFont(size=16))
         self.summary_label.pack(padx=10, pady=10, fill="both", expand=True)
 
     def layout_past_orders(self, parent: ctk.CTkScrollableFrame):
         ctk.CTkLabel(parent, text="Past Orders", font=ctk.CTkFont(size=18, weight="bold")).pack(pady=10)
 
-        self.past_order_label = ctk.CTkLabel(parent, text="No past orders", justify="left", anchor="w", font=ctk.CTkFont(size=16))
+        self.past_order_label = ctk.CTkLabel(parent, text="No past orders\n", justify="left", anchor="w", font=ctk.CTkFont(size=16))
         self.past_order_label.pack(padx=10, pady=10, fill="both", expand=True)
 
     def layout(self, app: ctk.CTk):
