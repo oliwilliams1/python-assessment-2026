@@ -47,11 +47,33 @@ class Restaurant:
 		self.decrement_buttons: dict[MenuItem, ctk.CTkButton] = {} # Maps menu items to their decrement buttons in the GUI
 		self.increment_buttons: dict[MenuItem, ctk.CTkButton] = {} # Maps menu items to their increment buttons in the GUI
 		self.place_order_button: ctk.CTkButton | None = None # Reference to the "Place Order" button in the GUI
-		self.summary_label: ctk.CTkLabel | None = None
+		self.summary_label: ctk.CTkLabel | None = None # Reference to the current order summary label in the GUI
+		self.email_entry: ctk.CTkEntry | None = None # Reference to the email entry field in the GUI
+		self.email_error_label: ctk.CTkLabel | None = None # Reference to the email error label in the GUI
 		self.current_order: Order = Order()
 	
+	# Helper function to validate email
+	def is_email_valid(self) -> bool:
+		if self.email_entry == None:
+			return False
+
+		email = self.email_entry.get().strip()
+
+		# Basic validation
+		return "@" in email and "." in email and len(email) > 5
+
 	# Place the current order, add it to the list of past orders, and update the GUI
 	def place_order(self):
+		# Validate email before ordering
+		if not self.is_email_valid():
+			if self.email_error_label != None:
+				self.email_error_label.configure(text="Please enter a valid email")
+			return
+
+		# Clear error message
+		if self.email_error_label != None:
+			self.email_error_label.configure(text="")
+
 		# Copy the current order to past orders list
 		self.past_orders.append(copy.deepcopy(self.current_order))
 
@@ -253,8 +275,19 @@ class Restaurant:
 
 	# Helper function to layout the order summary section of the GUI
 	def layout_order_summary(self, parent: ctk.CTkScrollableFrame):
-		#  "Current Order" Label
-		ctk.CTkLabel(parent, text="Current Order", font=ctk.CTkFont(size=18, weight="bold")).pack(pady=10)
+		# Email heading
+		ctk.CTkLabel(parent, text="Email", font=ctk.CTkFont(size=18, weight="bold")).pack(pady=(10, 5))
+
+		# Email entry
+		self.email_entry = ctk.CTkEntry(parent, placeholder_text="Enter your email")
+		self.email_entry.pack(padx=10, pady=5, fill="x")
+
+		# Validation error label
+		self.email_error_label = ctk.CTkLabel(parent, text="", text_color="red")
+		self.email_error_label.pack()
+
+		# "Current Order" Label
+		ctk.CTkLabel(parent, text="Current Order", font=ctk.CTkFont(size=18, weight="bold")).pack(pady=5)
 
 		# Dynamic current order summary label
 		self.summary_label = ctk.CTkLabel(parent, text="No items selected\n", justify="left", anchor="w", font=ctk.CTkFont(size=16))
