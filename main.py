@@ -256,6 +256,8 @@ class Restaurant:
 		increment_button = ctk.CTkButton(controls, text="+", width=35, command=lambda: self.modify_order(menu_item, 1))
 		increment_button.grid(row=0, column=2, padx=5)
 
+		ctk.CTkLabel(parent, text=f"Maximum Quantity: {MAX_QUANTITY}").grid(row=3, column=0)
+
 		# Store references
 		self.quantity_labels[menu_item] = quantity_label
 		self.decrement_buttons[menu_item] = decrement_button
@@ -368,7 +370,7 @@ if __name__ == "__main__":
 	app.geometry("1080x900") # Set the window size
 
 	# Create a restaurant instance and set up the initial GUI layout
-	restaurant = Restaurant("My Restaurant")
+	restaurant = Restaurant("Oli's Restaurant")
 	restaurant.layout(app)
 	restaurant.update_order_summary() # Reflect state in GUI
 
