@@ -50,7 +50,7 @@ class Restaurant:
 		self.summary_label: ctk.CTkLabel | None = None # Reference to the current order summary label in the GUI
 		self.email_entry: ctk.CTkEntry | None = None # Reference to the email entry field in the GUI
 		self.email_error_label: ctk.CTkLabel | None = None # Reference to the email error label in the GUI
-		self.current_order: Order = Order()
+		self.current_order: Order = Order() # Current order object
 	
 	# Helper function to validate email
 	def is_email_valid(self) -> bool:
@@ -370,7 +370,7 @@ if __name__ == "__main__":
 	app.geometry("1080x900") # Set the window size
 
 	# Create a restaurant instance and set up the initial GUI layout
-	restaurant = Restaurant("Oli's Restaurant")
+	restaurant = Restaurant("Icarus' Restaurant")
 	restaurant.layout(app)
 	restaurant.update_order_summary() # Reflect state in GUI
 
